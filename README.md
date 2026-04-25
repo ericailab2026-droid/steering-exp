@@ -1,40 +1,116 @@
-# GPT-2 Active Steering 实验
+# 🧠 GPT-2 Active Steering 实验
 
-## 📱 手机查看报告
-点击这里查看完整报告：**[📄 HTML 报告](https://ericjiang.github.io/steering-exp/)**
+> 在 GPT-2 (124M) 上控制模型输出情感倾向（赞美 vs 批评）
 
-## 🧪 实验目标
-在 GPT-2 (124M) 上实现 Active Steering，控制模型输出情感倾向（赞美 vs 批评）。
+---
 
-## 📊 当前进度
-- ✅ 第一轮实验完成
-- ⚠️ 发现样本质量问题
-- 🔄 准备改进中
+## 📊 实验概览
 
-## 🔍 关键发现
-- 最佳层：Layer 8 (Silhouette = 0.291)
-- 问题：α=10 导致模型重复，α≤6 效果不明显
-- 下一步：重新设计纯净样本，测试α=1-5
+| 指标 | 值 |
+|------|-----|
+| **最佳层** | Layer 8 (Silhouette = 0.291) |
+| **测试层数** | 3 层 (4, 6, 8) |
+| **正/负样本** | 各 8 条 |
+| **α 测试范围** | 0, 3, 6, 10, 15, -6, -10 |
+| **模型** | GPT-2 Small (124M, 12 层, 768 维) |
 
-## 🏃 快速开始
-```bash
-# 环境已配置好，直接运行
-cd ~/projects/interp-lab/steering-exp
-source venv/bin/activate
-python extract_vector.py
-python steer_generation.py
-```
+---
+
+## 📈 Layer 8 可视化（最佳效果）
+
+<div align="center">
+  <img src="images/layer8_pca.png" width="400" alt="Layer 8 PCA 可视化">
+</div>
+
+- **绿色** = 正样本（赞美）
+- **红色** = 负样本（批评）
+- **蓝色箭头** = Steering Vector
+- **Silhouette 分数**: 0.291（线性可分性中等）
+
+---
+
+## 🎯 关键发现
+
+### ✅ 成功之处
+- 流程跑通：完整实现 数据→提取→生成→可视化
+- 向量有效：成功提取方向向量（norm=31.80）
+- 效果可见：α=10 时模型重复"unique"，说明 steering 生效
+
+### ⚠️ 发现的问题
+| 问题 | 描述 |
+|------|------|
+| **样本不纯** | 混杂"商业成功/失败"概念而非纯情感 |
+| **α范围需调优** | α≤6 效果不明显，α=10 模型崩坏，最佳在 3-6 |
+| **负向不满足** | α=-6 输出政治内容而非纯粹批评 |
+
+---
+
+## 🔄 下一步改进计划
+
+- [ ] **重新设计纯净样本**（只含"brilliant/terrible"等纯情感词）
+- [ ] **重新提取 Steering Vector**
+- [ ] **小范围测试 α=1,2,3,4,5**（寻找最佳范围）
+- [ ] **Layer 6 vs Layer 8 对比测试**
+- [ ] **添加 VADER 自动情感评分**
+
+---
 
 ## 📁 文件结构
+
 ```
 steering-exp/
-├── steering_data.py        # 实验样本数据
-├── extract_vector.py       # 向量提取脚本
-├── steer_generation.py     # 生成测试脚本
-├── layer{4,6,8}_pca.png   # 可视化图
-├── report.html            # 手机友好报告
-└── experiments.md         # 详细实验笔记
+├── report.html              # 完整优化版报告（需手动打开）
+├── README.md                # 你正看到的 repo 首页
+├── images/
+│   ├── layer4_pca.png       # Layer 4 PCA 图
+│   ├── layer6_pca.png       # Layer 6 PCA 图
+│   └── layer8_pca.png       # Layer 8 PCA 图（最佳）
+├── steering_data.py         # 实验样本数据（8 正 +8 负）
+├── extract_vector.py        # 向量提取脚本
+├── steer_generation.py      # 生成测试脚本
+├── generation_results.json  # 生成结果记录
+├── experiments.md           # 详细实验笔记
+└── best_steer_vector_layer8.pt  # 最佳 Steering Vector
 ```
 
 ---
-*自动生成的实验报告 | 下次汇报: 每 30 分钟*
+
+## 🚀 快速开始
+
+```bash
+# 环境已配置好
+cd ~/projects/interp-lab/steering-exp
+source venv/bin/activate
+
+# 重新提取向量
+python extract_vector.py
+
+# 测试生成
+python steer_generation.py
+
+# 查看结果
+cat generation_results.json
+```
+
+---
+
+## 📱 手机查看说明
+
+| 内容 | 查看方式 |
+|------|----------|
+| **完整报告** | 本 README（直接在 repo 首页） |
+| **PCA 图片** | 直接点击 repo 中的 `images/` 文件夹 |
+| **详细报告** | 点击 `report.html` 下载后打开 |
+| **实验脚本** | 点击文件名，点击 "Raw" 查看 |
+
+---
+
+## 📋 实验记录
+
+**更新时间**: 2026-04-25 11:53  
+**状态**: 第二轮改进进行中  
+**下次汇报**: 12:23
+
+---
+
+**自动更新 by Hermes Agent** | [Active Steering 实验系列]
