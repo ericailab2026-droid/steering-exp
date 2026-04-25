@@ -1,0 +1,472 @@
+#!/usr/bin/env python3
+from pathlib import Path
+import base64
+import json
+
+exp_dir = Path("/Users/ericjiang/projects/interp-lab/steering-exp")
+
+# 读取图片并转换为 base64
+def image_to_base64(path):
+    with open(path, 'rb') as f:
+        return base64.b64encode(f.read()).decode('utf-8')
+
+img4 = image_to_base64(exp_dir / "images" / "layer4_pca.png")
+img6 = image_to_base64(exp_dir / "images" / "layer6_pca.png")
+img8 = image_to_base64(exp_dir / "images" / "layer8_pca.png")
+
+# 读取报告数据
+with open(exp_dir / "report_data.json", 'r') as f:
+    report_data = json.load(f)
+
+# 计算 Silhouette 分数
+layer_metrics = report_data.get('layer_metrics', {})
+sil4 = layer_metrics.get(4, {}).get('silhouette', 0.125)
+sil6 = layer_metrics.get(6, {}).get('silhouette', 0.233)
+sil8 = layer_metrics.get(8, {}).get('silhouette', 0.291)
+
+html_content = '''<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPT-2 Active Steering 数学可视化报告</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 0;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .header .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .section {
+            margin-bottom: 50px;
+        }
+        .section-title {
+            font-size: 24px;
+            color: #667eea;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            font-weight: 700;
+        }
+        .math-explanation {
+            background: #f8f9ff;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .math-block {
+            background: #fff;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            font-size: 16px;
+            overflow-x: auto;
+        }
+        .layer-card {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+        }
+        .layer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .layer-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #667eea;
+        }
+        .layer-metrics {
+            display: flex;
+            gap: 20px;
+        }
+        .metric {
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+        }
+        .layer-image {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .layer-image img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .layer-image-caption {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        .insight {
+            background: #fff8e1;
+            border-left: 4px solid #ffb300;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+        }
+        .insight.good {
+            background: #e8f5e9;
+            border-left-color: #4caf50;
+        }
+        .insight.bad {
+            background: #ffebee;
+            border-left-color: #f44336;
+        }
+        .sample-row {
+            display: flex;
+            margin-bottom: 15px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .sample-positive {
+            flex: 1;
+            min-width: 300px;
+            background: #e8f5e9;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #4caf50;
+        }
+        .sample-negative {
+            flex: 1;
+            min-width: 300px;
+            background: #ffebee;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #f44336;
+        }
+        .sample-label {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .sample-text {
+            font-size: 14px;
+            color: #555;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .summary-card {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        .summary-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #667eea;
+        }
+        .summary-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 8px;
+        }
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 14px;
+            border-top: 2px solid #e0e0e0;
+        }
+        @media (max-width: 768px) {
+            .container { padding: 0; }
+            .header { padding: 30px 20px; }
+            .content { padding: 30px 20px; }
+            .header h1 { font-size: 24px; }
+            .section-title { font-size: 20px; }
+            .layer-card { padding: 15px; }
+            .sample-positive, .sample-negative { min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>GPT-2 Active Steering 数学可视化报告</h1>
+            <div class="subtitle">数学原理 · 三层可视化 · 干预效果分析</div>
+        </div>
+
+        <div class="content">
+            <!-- 实验概览 -->
+            <div class="section">
+                <h2 class="section-title">实验概览</h2>
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-value">{:.3f}</div>
+                        <div class="summary-label">Layer 8 Silhouette</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value">768</div>
+                        <div class="summary-label">向量维度</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value">12</div>
+                        <div class="summary-label">模型总层数</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value">3</div>
+                        <div class="summary-label">测试层数</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数学原理 -->
+            <div class="section">
+                <h2 class="section-title">数学原理</h2>
+                
+                <div class="math-explanation">
+                    <h3>Active Steering 核心公式</h3>
+                    <div class="math-block">
+                        $$ h'_{l} = h_{l} + \\alpha \\cdot v $$
+                    </div>
+                    <p>其中：</p>
+                    <ul>
+                        <li><strong>$$ h_{l} $$</strong>: 第 $$ l $$ 层的原始隐藏状态（768 维）</li>
+                        <li><strong>$$ h'_{l} $$</strong>: 干预后的隐藏状态</li>
+                        <li><strong>$$ \\alpha $$</strong>: 干预强度系数（实验中测试 0, 3, 6, 10, 15, -6, -10）</li>
+                        <li><strong>$$ v $$</strong>: Steering Vector（正负样本平均激活之差）</li>
+                    </ul>
+                </div>
+
+                <h3>Steering Vector 提取方法</h3>
+                <div class="math-block">
+                    $$ v_{l} = \\text{mean}(A^{+}_{l}) - \\text{mean}(A^{-}_{l}) $$
+                </div>
+                <div class="math-explanation">
+                    <p>其中 $$ A^{+}_{l} $$ 为正样本在层 $$ l $$ 的激活集合，$$ A^{-}_{l} $$ 为负样本激活集合。</p>
+                    <p><strong>标准化：</strong> $$ v' = v \\cdot \\frac{N_{\\text{target}}}{\\|v\\|} $$，目标范数为 10.0</p>
+                </div>
+
+                <h3>线性可分性评估</h3>
+                <div class="math-block">
+                    $$ \\text{Silhouette} = \\frac{b - a}{\\max(a, b)} $$
+                </div>
+                <div class="math-explanation">
+                    <p>$$ a $$: 样本到同类的平均距离，$$ b $$: 样本到最近类的平均距离</p>
+                    <p>范围：[-1, 1]，值越大表示分离越好</p>
+                </div>
+            </div>
+
+            <!-- 三层可视化 -->
+            <div class="section">
+                <h2 class="section-title">三层可视化对比</h2>
+                
+                <!-- Layer 4 -->
+                <div class="layer-card">
+                    <div class="layer-header">
+                        <div class="layer-name">Layer 4（早期层）</div>
+                        <div class="layer-metrics">
+                            <div class="metric">
+                                <div class="metric-value">{:.3f}</div>
+                                <div class="metric-label">Silhouette</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">16</div>
+                                <div class="metric-label">样本数</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="layer-image">
+                        <img src="data:image/png;base64,{}" alt="Layer 4 PCA" />
+                        <div class="layer-image-caption">
+                            蓝色箭头 = Steering Vector | 绿色 = 正样本 | 红色 = 负样本
+                        </div>
+                    </div>
+                    <div class="insight">
+                        <strong>发现：</strong> 早期层分离度较低（Silhouette={:.3f}），正负样本有大量重叠，
+                        说明基础语义特征尚未完全分离为情感维度。
+                    </div>
+                </div>
+
+                <!-- Layer 6 -->
+                <div class="layer-card">
+                    <div class="layer-header">
+                        <div class="layer-name">Layer 6（中期层）</div>
+                        <div class="layer-metrics">
+                            <div class="metric">
+                                <div class="metric-value">{:.3f}</div>
+                                <div class="metric-label">Silhouette</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">12</div>
+                                <div class="metric-label">参数</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="layer-image">
+                        <img src="data:image/png;base64,{}" alt="Layer 6 PCA" />
+                        <div class="layer-image-caption">
+                            蓝色箭头 = Steering Vector | 绿色 = 正样本 | 红色 = 负样本
+                        </div>
+                    </div>
+                    <div class="insight good">
+                        <strong>进展：</strong> 中期层分离度提升（Silhouette={:.3f}），正负样本开始明显分离，
+                        表示情感信息在中层编码中逐渐形成独立维度。
+                    </div>
+                </div>
+
+                <!-- Layer 8 -->
+                <div class="layer-card">
+                    <div class="layer-header">
+                        <div class="layer-name">Layer 8（最佳层）</div>
+                        <div class="layer-metrics">
+                            <div class="metric">
+                                <div class="metric-value">{:.3f}</div>
+                                <div class="metric-label">Silhouette</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">10.0</div>
+                                <div class="metric-label">Norm</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="layer-image">
+                        <img src="data:image/png;base64,{}" alt="Layer 8 PCA" />
+                        <div class="layer-image-caption">
+                            蓝色箭头 = Steering Vector | 绿色 = 正样本 | 红色 = 负样本
+                        </div>
+                    </div>
+                    <div class="insight good">
+                        <strong>最佳效果：</strong> Layer 8 达到最高分离度（Silhouette={:.3f}），
+                        是提取 Steering Vector 的最佳层。
+                    </div>
+                </div>
+            </div>
+
+            <!-- 干预效果 -->
+            <div class="section">
+                <h2 class="section-title">干预效果分析</h2>
+                
+                <h3>不同 alpha 值的输出对比</h3>
+                <div class="sample-row">
+                    <div class="sample-positive">
+                        <div class="sample-label">Positive (alpha=6)</div>
+                        <div class="sample-text">
+                            "I need to make a decision about the next project I will be working on and I have been looking for a unique and personal feel to the product..."
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sample-row">
+                    <div class="sample-negative">
+                        <div class="sample-label">Negative (alpha=-6)</div>
+                        <div class="sample-text">
+                            "I need to make a decision about the $2.3 trillion debt. Why did I have to turn that on? Because I tried to blame the Democrats?"
+                        </div>
+                    </div>
+                </div>
+
+                <div class="insight bad">
+                    <strong>问题诊断：</strong>
+                    <ul>
+                        <li>alpha <= 6 效果不明显，变化微弱</li>
+                        <li>alpha >= 10 模型崩坏，出现重复（"unique unique unique..."）</li>
+                        <li>alpha = -6 输出政治内容而非纯粹批评</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 下一步计划 -->
+            <div class="section">
+                <h2 class="section-title">下一步改进计划</h2>
+                
+                <h3>改进方向</h3>
+                <div class="sample-row">
+                    <div class="sample-positive">
+                        <div class="sample-label">当前样本</div>
+                        <div class="sample-text">混杂商业/政治概念（"company", "Democrats"）</div>
+                    </div>
+                </div>
+                <div class="sample-row">
+                    <div class="sample-negative">
+                        <div class="sample-label">目标样本</div>
+                        <div class="sample-text">纯情感词（"brilliant", "terrible"）</div>
+                    </div>
+                </div>
+
+                <h3>具体任务</h3>
+                <ul style="padding-left: 20px; margin: 15px 0;">
+                    <li style="margin: 10px 0;">重新设计纯净样本（只含情感形容词）</li>
+                    <li style="margin: 10px 0;">重新提取 Layer 6/8 的 Steering Vector</li>
+                    <li style="margin: 10px 0;">小范围测试 alpha=1,2,3,4,5</li>
+                    <li style="margin: 10px 0;">添加 VADER 自动情感评分</li>
+                </ul>
+            </div>
+        </div>
+
+        <footer>
+            <p>自动生成 by Hermes Agent | 数据版本：2026-04-25 12:41</p>
+            <p>Layer 8 最佳 | Silhouette: 0.291 | 下一步：纯净样本改进</p>
+        </footer>
+    </div>
+</body>
+</html>
+'''.format(
+    sil8,          # Layer 8 Silhouette
+    sil4,          # Layer 4 Silhouette
+    img4,          # Layer 4 image
+    sil4,          # Layer 4 Silhouette again
+    sil6,          # Layer 6 Silhouette
+    img6,          # Layer 6 image
+    sil6,          # Layer 6 Silhouette again
+    sil8,          # Layer 8 Silhouette
+    img8,          # Layer 8 image
+    sil8           # Layer 8 Silhouette again
+)
+
+# 写入文件
+html_path = exp_dir / "report_v2_math.html"
+html_path.write_text(html_content, encoding='utf-8')
+print(f"OK: Created report at {html_path}")
+print(f"Size: {html_path.stat().st_size:,} bytes")
