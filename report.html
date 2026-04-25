@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPT-2 Active Steering 实验报告</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 24px;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+        
+        .meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .status-card {
+            background: #f0f7ff;
+            border-left: 4px solid #0066cc;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+        
+        .status-card h3 {
+            color: #0066cc;
+            margin-bottom: 12px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .success { color: #10b981; font-weight: 600; }
+        .warning { color: #f59e0b; font-weight: 600; }
+        .error { color: #ef4444; font-weight: 600; }
+        
+        .section {
+            margin-bottom: 32px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #0066cc;
+        }
+        
+        .insight-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: 8px;
+        }
+        
+        .insight-box.negative {
+            background: #fee2e2;
+            border-left-color: #ef4444;
+        }
+        
+        .insight-box.success {
+            background: #d1fae5;
+            border-left-color: #10b981;
+        }
+        
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 16px 0;
+            display: block;
+        }
+        
+        .image-caption {
+            font-size: 13px;
+            color: #666;
+            text-align: center;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        .code-block {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+        
+        .action-item {
+            background: #f0f7ff;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 8px 0;
+            border-left: 3px solid #0066cc;
+        }
+        
+        .priority {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+            margin-right: 8px;
+        }
+        
+        .p0 { background: #ef4444; }
+        .p1 { background: #f59e0b; }
+        .p2 { background: #10b981; }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        
+        .summary-card {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .summary-card .value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0066cc;
+        }
+        
+        .summary-card .label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+            
+            .container {
+                padding: 16px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 GPT-2 Active Steering 实验报告</h1>
+        <div class="meta">
+            <strong>时间</strong>: 2026-04-25 11:53<br>
+            <strong>状态</strong>: 第一轮实验完成，发现关键问题，准备改进
+        </div>
+
+        <!-- 执行概览 -->
+        <div class="section">
+            <div class="section-title">📊 执行概览</div>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="value">3</div>
+                    <div class="label">层数测试</div>
+                </div>
+                <div class="summary-card">
+                    <div class="value">8</div>
+                    <div class="label">正/负样本</div>
+                </div>
+                <div class="summary-card">
+                    <div class="value">8</div>
+                    <div class="label">α值测试</div>
+                </div>
+                <div class="summary-card">
+                    <div class="value">0.291</div>
+                    <div class="label">Sillouette分数</div>
+                </div>
+            </div>
+
+            <div class="status-card">
+                <h3>✅ 完成进度</h3>
+                <table>
+                    <tr>
+                        <th>阶段</th>
+                        <th>状态</th>
+                    </tr>
+                    <tr><td>环境搭建</td><td class="success">完成</td></tr>
+                    <tr><td>数据准备</td><td class="success">完成</td></tr>
+                    <tr><td>向量提取</td><td class="success">完成</td></tr>
+                    <tr><td>干预生成</td><td class="success">完成</td></tr>
+                    <tr><td>可视化</td><td class="success">完成</td></tr>
+                    <tr><td>评估改进</td><td class="warning">进行中</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- 可视化结果 -->
+        <div class="section">
+            <div class="section-title">📈 Layer 8 可视化结果（最佳）</div>
+            <img src="https://raw.githubusercontent.com/ericjiang/steering-exp/main/images/layer8_pca.png" alt="Layer 8 PCA" onerror="this.style.display='none'">
+            <div class="image-caption">
+                绿色=正样本（赞美），红色=负样本（批评），蓝色箭头=Steering Vector<br>
+                Silhouette分数: 0.291（线性可分性中等）
+            </div>
+            
+            <div class="insight-box">
+                <strong>🔍 发现：</strong> 正负样本在2D空间呈现明显分离趋势，但仍有部分重叠，说明方向提取有效但不够纯净。
+            </div>
+        </div>
+
+        <!-- 关键发现 -->
+        <div class="section">
+            <div class="section-title">🎯 关键发现</div>
+            
+            <div class="insight-box success">
+                <strong>✅ 成功之处</strong>
+                <ul>
+                    <li>流程跑通：完整实现数据→提取→生成→可视化</li>
+                    <li>向量有效：成功提取方向向量（norm=31.80）</li>
+                    <li>效果可见：α=10时模型重复"unique"，说明steering生效</li>
+                </ul>
+            </div>
+
+            <div class="insight-box negative">
+                <strong>⚠️ 发现的问题</strong>
+                <ul>
+                    <li><strong>样本不纯</strong>：混杂了"商业成功/失败"概念而非纯情感</li>
+                    <li><strong>α范围需调优</strong>：α≤6效果不明显，α=10模型崩坏，最佳在3-6</li>
+                    <li><strong>负向不满足预期</strong>：α=-6输出政治内容而非纯粹批评</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 下一步计划 -->
+        <div class="section">
+            <div class="section-title">🔄 下一步改进计划</div>
+            <div class="action-item">
+                <span class="priority p0">P0</span>
+                <span>重新设计纯净样本（只含情感词，避免商业/政治词汇）</span>
+            </div>
+            <div class="action-item">
+                <span class="priority p0">P0</span>
+                <span>重新提取 Steering Vector</span>
+            </div>
+            <div class="action-item">
+                <span class="priority p1">P1</span>
+                <span>测试小范围 α (1, 2, 3, 4, 5) 寻找最佳范围</span>
+            </div>
+            <div class="action-item">
+                <span class="priority p1">P1</span>
+                <span>比较 Layer 6 vs Layer 8 的效果差异</span>
+            </div>
+            <div class="action-item">
+                <span class="priority p2">P2</span>
+                <span>添加 VADER 自动情感评分进行量化评估</span>
+            </div>
+        </div>
+
+        <!-- 预期效果 -->
+        <div class="section">
+            <div class="section-title">🎯 预期改进后效果</div>
+            <div class="insight-box">
+                <ul>
+                    <li>α=3-4 时，输出明显更"积极"或更"消极"</li>
+                    <li>α=6 时仍保持流畅，不重复词汇</li>
+                    <li>α=-4 时输出清晰的批评语气，不含政治内容</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 行动建议 -->
+        <div class="section">
+            <div class="section-title">💬 下一步行动</div>
+            <p>我已准备好改进样本并重新运行实验，预计20分钟后获得更干净的结果。你可以：</p>
+            <div class="action-item">
+                <strong>✅ 继续优化实验</strong> - 我现在继续跑第二轮改进
+            </div>
+            <div class="action-item">
+                <strong>⏸️ 暂停查看</strong> - 等你看完这份报告再决定
+            </div>
+        </div>
+
+        <div style="text-align: center; color: #666; font-size: 12px; margin-top: 32px; padding-top: 16px; border-top: 1px solid #e0e0e0;">
+            自动生成 by Hermes Agent | 下次汇报: 12:15
+        </div>
+    </div>
+</body>
+</html>
